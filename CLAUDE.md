@@ -1,7 +1,8 @@
 # Notes for Claude sessions working on this SpikeGLX fork
 
 This is olinesn's fork of `billkarsh/SpikeGLX`. Its own work is an unofficial offline build for
-Apple Silicon Macs (`SpikeGLX_NISIM.app`); `macos/README.md` describes it.
+Apple Silicon Macs (`SpikeGLX_NISIM.app`); `macos/README.md` describes it. `linux/README.md`
+describes the same build for Linux on Arm (aarch64), packed as an AppImage.
 
 ## Branches
 
@@ -19,16 +20,18 @@ Apple Silicon Macs (`SpikeGLX_NISIM.app`); `macos/README.md` describes it.
 
 - Change as little as possible, and say why in the commit.
 - The repo stores text with CRLF line endings (`.gitattributes`: `* text eol=crlf`). Keep CRLF
-  in upstream files. `macos/` has its own `.gitattributes` (LF) because its scripts run on macOS.
+  in upstream files. `macos/` and `linux/` have their own `.gitattributes` (LF) because their
+  scripts run on macOS and Linux.
 
-## Keep macos/README.md current
+## Keep macos/README.md and linux/README.md current
 
 - **Same PR.** A PR that changes a build step, a version, a test or a known issue also updates
-  `macos/README.md`. Say in the PR description what changed in the docs, or that nothing in them
-  needed to.
+  `macos/README.md`, or `linux/README.md` for the Linux build. Say in the PR description what
+  changed in the docs, or that nothing in them needed to.
 - **`.github/workflows/macos-arm64-offline.yml`** builds, checks and smoke-tests the app on every
   PR and every push to `dev`, and uploads it. Run `macos/smoke_test.py` on your own build too:
-  it opens a window for a few seconds.
+  it opens a window for a few seconds. On Linux, run `linux/smoke_test.py` on the program or the
+  AppImage; it needs an X display.
 
 ## Pull request descriptions
 
