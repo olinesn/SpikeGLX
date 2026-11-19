@@ -2,9 +2,10 @@
 
 *Written by Claude Code.*
 
-This branch (`macos-arm64-offline`) builds SpikeGLX's offline variant, `SpikeGLX_NISIM.app`, as a
-native arm64 macOS app with Qt 6.10.3. It is based on `billkarsh/SpikeGLX` master at `cbcd078`.
-SpikeGLX doesn't officially support macOS; this is an unofficial build for looking at data.
+This fork's `dev` branch builds SpikeGLX's offline variant, `SpikeGLX_NISIM.app`, as a
+native arm64 macOS app with Qt 6.10.3. It is based on `billkarsh/SpikeGLX` master at `cbcd078`;
+the fork's `master` stays identical to upstream. SpikeGLX doesn't officially support macOS; this
+is an unofficial build for looking at data.
 
 **It can't acquire.** The imec, VISA and NI-DAQmx backends are turned off, and none of their
 libraries exist for macOS. It can open recordings in the File Viewer, show and edit IMRO tables
@@ -12,8 +13,9 @@ libraries exist for macOS. It can open recordings in the File Viewer, show and e
 
 ## Download
 
-Open the Actions tab, then the latest "macOS arm64 offline build" run. Download the artifact
-`SpikeGLX_NISIM-macos-arm64`. It holds `SpikeGLX_NISIM-macos-arm64.zip`; unzip that too.
+Open the Actions tab, then the latest "macOS arm64 offline build" run on `dev` (every pull request
+gets one too). Download the artifact `SpikeGLX_NISIM-macos-arm64`. It holds
+`SpikeGLX_NISIM-macos-arm64.zip`; unzip that too. Artifacts are kept for 90 days.
 
 - The app is ad-hoc signed, not notarized. macOS blocks it after a download until you clear the
   quarantine flag: `xattr -dr com.apple.quarantine SpikeGLX_NISIM.app` (or right-click ▸ Open).
@@ -37,7 +39,8 @@ Three commits on top of upstream (25 lines added, 12 removed, in 4 files):
 3. **`SpikeGLX40.pro`**: `HAVE_IMEC`, `HAVE_VISA`, `HAVE_NIDAQmx` commented out (upstream's own
    switch for the simulated build).
 
-The rest is new: `.github/workflows/macos-arm64-offline.yml` and this folder.
+The rest is new: `.github/workflows/macos-arm64-offline.yml`, this folder and `CLAUDE.md`
+(how changes go into this fork).
 
 ## Build it yourself
 
@@ -62,7 +65,7 @@ arm64 (57 → 29 MB), removes rpaths that point outside the bundle and signs it 
 
 ## What is tested
 
-- **Every CI run:** build, package, `check_bundle.sh` (every binary arm64-only, nothing linked
+- **Every pull request and every push to `dev`:** build, package, `check_bundle.sh` (every binary arm64-only, nothing linked
   from outside the bundle except macOS itself, signature valid) and `smoke_test.py` (starts from
   `/`, sends `GETVERSION`, `GETDATADIR`, `SETDATADIR` and `SETMULTIDRIVEENABLE` over
   127.0.0.1, checks the app stays up and saves its settings beside the `.app`).

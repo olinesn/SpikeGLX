@@ -4,14 +4,21 @@ name: macOS arm64 offline build
 
 on:
   push:
-    branches: [macos-arm64-offline]
+    branches: [dev]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: macos-arm64-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    # dev's branch protection requires this check by name.
+    name: macOS arm64 build
     runs-on: macos-15   # Apple Silicon
     timeout-minutes: 45
     env:
