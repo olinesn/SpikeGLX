@@ -1,0 +1,2 @@
+# Scripts here run on macOS: keep LF (the repo default is CRLF).
+* text eol=lf
