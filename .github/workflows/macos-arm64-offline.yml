@@ -1,0 +1,61 @@
+# Builds the offline SpikeGLX (SpikeGLX_NISIM.app) for Apple Silicon Macs,
+# checks the bundle, runs macos/smoke_test.py and uploads the zipped app.
+name: macOS arm64 offline build
+
+on:
+  push:
+    branches: [macos-arm64-offline]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15   # Apple Silicon
+    timeout-minutes: 45
+    env:
+      QT_VERSION: 6.10.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt (qtbase + qtsvg only)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/aqt"
+          "$RUNNER_TEMP/aqt/bin/pip" install --quiet aqtinstall==3.3.0
+          "$RUNNER_TEMP/aqt/bin/aqt" install-qt mac desktop "$QT_VERSION" clang_64 \
+            --archives qtbase qtsvg -O "$RUNNER_TEMP/Qt"
+          echo "QTBIN=$RUNNER_TEMP/Qt/$QT_VERSION/macos/bin" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          clang --version | head -1
+          echo "SDK $(xcrun --show-sdk-version)"
+          mkdir -p "$RUNNER_TEMP/build" "$RUNNER_TEMP/out"
+          cd "$RUNNER_TEMP/build"
+          # -include arm_acle.h: Qt 6.10.3's qyieldcpu.h calls __yield() without
+          # declaring it, which newer clang rejects. Harmless where not needed.
+          "$QTBIN/qmake" "$GITHUB_WORKSPACE/SpikeGLX40.pro" -spec macx-clang -after \
+            "CONFIG-=debug" "CONFIG+=release" "CONFIG+=sdk_no_version_check" \
+            "DESTDIR=$RUNNER_TEMP/out" "QMAKE_APPLE_DEVICE_ARCHS=arm64" \
+            "DEFINES+=GL_SILENCE_DEPRECATION" "QMAKE_CXXFLAGS+=-include arm_acle.h"
+          make -j"$(sysctl -n hw.ncpu)"
+
+      - name: Package (macdeployqt, arm64 only, ad-hoc signature)
+        run: zsh macos/package_mac.sh "$QTBIN" "$RUNNER_TEMP/out/SpikeGLX_NISIM.app"
+
+      - name: Check the bundle
+        run: bash macos/check_bundle.sh "$RUNNER_TEMP/out/SpikeGLX_NISIM.app"
+
+      - name: Smoke test (start-up, command server, settings beside the app)
+        run: python3 macos/smoke_test.py "$RUNNER_TEMP/out/SpikeGLX_NISIM.app"
+
+      - name: Zip the app
+        # ditto keeps the frameworks' symlinks and the executable bits.
+        run: ditto -c -k --keepParent "$RUNNER_TEMP/out/SpikeGLX_NISIM.app" "$RUNNER_TEMP/SpikeGLX_NISIM-macos-arm64.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpikeGLX_NISIM-macos-arm64
+          path: ${{ runner.temp }}/SpikeGLX_NISIM-macos-arm64.zip
+          retention-days: 90
