@@ -45,7 +45,7 @@
     #include <GL/gl.h>
 #elif defined(Q_OS_DARWIN)
     #include <CoreServices/CoreServices.h>
-    #include <GL/gl.h>
+    #include <OpenGL/gl.h>
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -53,7 +53,7 @@
 /* ---------------------------------------------------------------- */
 
 #if !defined(Q_OS_WIN) && !defined(Q_OS_LINUX)
-    #include <QTime>
+    #include <QElapsedTimer>
 #endif
 
 #if !defined(Q_OS_WIN)
@@ -404,7 +404,7 @@ double getTime()
 
 double getTime()
 {
-    static QTime    t;
+    static QElapsedTimer t;
     static bool     started = false;
 
     if( !started ) {
@@ -412,7 +412,7 @@ double getTime()
         started = true;
     }
 
-    return t.elapsed() / 1000.0;
+    return t.nsecsElapsed() / 1e9;
 }
 
 #endif

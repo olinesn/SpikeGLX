@@ -459,9 +459,11 @@ QString appPath()
     path = QDir::currentPath();
 
 #ifdef Q_OS_MAC
-    QDir    D( path );
+// Finder starts apps with cwd "/": use the folder holding the bundle,
+// <dir>/App.app/Contents/MacOS -> <dir>.
+    QDir    D( QCoreApplication::applicationDirPath() );
 
-    if( D.cdUp() )
+    if( D.cdUp() && D.cdUp() && D.cdUp() )
         path = D.canonicalPath();
 #endif
 
