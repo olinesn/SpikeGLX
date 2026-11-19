@@ -32,6 +32,9 @@ describes the same build for Linux on Arm (aarch64), packed as an AppImage.
   PR and every push to `dev`, and uploads it. Run `macos/smoke_test.py` on your own build too:
   it opens a window for a few seconds. On Linux, run `linux/smoke_test.py` on the program or the
   AppImage; it needs an X display.
+- **`.github/workflows/linux-arm64-offline.yml`** does the same for the Linux build on GitHub's
+  Arm runners (`ubuntu-24.04-arm`), running the smoke test on the program and the AppImage
+  under Xvfb. It is not a required check on `dev`.
 
 ## Pull request descriptions
 

@@ -5,7 +5,7 @@ Usage: python3 linux/smoke_test.py PATH [--port 4142]
   PATH is the built program (out/SpikeGLX_NISIM) or the AppImage.
 
 Needs an X display (DISPLAY set): a desktop session, or a virtual X server
-such as Xvfb (not tried yet). SpikeGLX keeps its settings in _Configs in its "app folder": the
+(the GitHub workflow runs it under xvfb-run). SpikeGLX keeps its settings in _Configs in its "app folder": the
 working folder for the bare program, the AppImage's folder for an AppImage.
 The test puts a _Configs/mainapp.ini there that names an existing data folder
 (so the first-start dialog doesn't block) and turns on the command server on

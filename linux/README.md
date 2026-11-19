@@ -73,6 +73,13 @@ On an NVIDIA Jetson AGX Orin (12 Arm cores, Ubuntu 24.04, NVIDIA's driver with O
   the probe on the Edit tab. So the fixed-function OpenGL works with NVIDIA's driver. These
   windows were opened by a test-only hook calling the same code as the menus (the desktop was
   locked), not by clicking.
+- **On GitHub Actions** (`.github/workflows/linux-arm64-offline.yml`, on GitHub's
+  `ubuntu-24.04-arm` runners, for every pull request and every push to `dev`): `compile.sh` and
+  `package_appimage.sh` from scratch; a check that Qt's X11 plugin finds every library it needs
+  and that the AppImage leaves out the system's OpenGL and C libraries; and `smoke_test.py` on
+  the program and on the AppImage under Xvfb (Mesa's software OpenGL). The run keeps the zipped
+  `SpikeGLX_pkg` folder for 90 days. A run takes about 4 minutes, of which the build, Qt download
+  included, takes about 2 min 40 s. It is not a required check on `dev`.
 - **Not tested:** clicking the real menus and the file dialog; Wayland without XWayland; Mesa
   drivers (AMD, Intel, Raspberry Pi); any other Arm board; x86-64 with these scripts; File
   Viewer features past the first screen; LF, NI and OneBox files; PAR2; the gate/trigger server.
