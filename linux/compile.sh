@@ -28,6 +28,10 @@ if [ -z "${QTDIR:-}" ]; then
             --archives qtbase qtsvg icu -O "$W/Qt"
     fi
 fi
+if [ ! -x "$QTDIR/bin/qmake" ]; then
+    echo "no Qt in QTDIR=$QTDIR (no bin/qmake there)" >&2
+    exit 1
+fi
 echo "Qt: $QTDIR ($("$QTDIR/bin/qmake" -query QT_VERSION))"
 g++ --version | head -1
 

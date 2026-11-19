@@ -44,7 +44,7 @@ jobs:
             libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-sync1 \
             libxcb-xfixes0 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 \
             xvfb xauth libgl1-mesa-dri libglx-mesa0 fuse3
-          echo "QTDIR=$RUNNER_TEMP/w/Qt/$QT_VERSION/gcc_arm64" >> "$GITHUB_ENV"
+          echo "QT_ROOT=$RUNNER_TEMP/w/Qt/$QT_VERSION/gcc_arm64" >> "$GITHUB_ENV"
 
       - name: Build (linux/compile.sh, Qt download included)
         run: bash linux/compile.sh "$RUNNER_TEMP/w"
@@ -52,12 +52,12 @@ jobs:
       - name: Check that Qt's X11 plugin finds every library it needs
         run: |
           missing=$(ldd "$RUNNER_TEMP/w/out/SpikeGLX_NISIM" \
-            "$QTDIR"/plugins/platforms/libqxcb.so "$QTDIR"/plugins/xcbglintegrations/*.so \
+            "$QT_ROOT"/plugins/platforms/libqxcb.so "$QT_ROOT"/plugins/xcbglintegrations/*.so \
             | grep 'not found' || true)
           if [ -n "$missing" ]; then echo "$missing"; exit 1; fi
 
       - name: Pack the AppImage (linux/package_appimage.sh)
-        run: bash linux/package_appimage.sh "$QTDIR" "$RUNNER_TEMP/w/out/SpikeGLX_NISIM" "$RUNNER_TEMP/pkg"
+        run: bash linux/package_appimage.sh "$QT_ROOT" "$RUNNER_TEMP/w/out/SpikeGLX_NISIM" "$RUNNER_TEMP/pkg"
 
       - name: Check that the AppImage leaves out the system's OpenGL and C libraries
         run: |
