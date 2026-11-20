@@ -9,8 +9,9 @@ describes the same build for Linux on Arm (aarch64), packed as an AppImage.
 - **`master` is upstream, unchanged.** Never commit or push to it; it is updated only with
   GitHub's Sync fork, so it always equals `billkarsh/SpikeGLX` master.
 - **`dev` is the fork's line** (the default branch). Every change goes in by pull request to
-  `dev`, from a branch of its own. `dev` requires a PR and the `macOS arm64 build` check; this
-  applies to admins too. The user merges; never merge, and never suggest a merge or an order.
+  `dev`, from a branch of its own. `dev` requires a PR and two checks, `macOS arm64 build` and
+  `Linux arm64 build`; this applies to admins too. The user merges; never merge, and never
+  suggest a merge or an order.
 - **Taking a new upstream version:** a PR to `dev` that merges `master` after a Sync fork.
 - **Keep upstream fixes in their own commits** (like the command-server crash fix), so one can
   go upstream by itself. Upstream takes no pull requests; it answers issues. Post nothing on
@@ -34,7 +35,8 @@ describes the same build for Linux on Arm (aarch64), packed as an AppImage.
   AppImage; it needs an X display.
 - **`.github/workflows/linux-arm64-offline.yml`** does the same for the Linux build on GitHub's
   Arm runners (`ubuntu-24.04-arm`), running the smoke test on the program and the AppImage
-  under Xvfb. It is not a required check on `dev`.
+  under Xvfb. `dev` requires it too, so a branch cut from `dev` before this workflow was on it
+  never gets the check, and its PR can't merge until the branch is brought up to date with `dev`.
 
 ## Pull request descriptions
 
