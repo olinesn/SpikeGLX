@@ -73,6 +73,16 @@ On an NVIDIA Jetson AGX Orin (12 Arm cores, Ubuntu 24.04, NVIDIA's driver with O
   the probe on the Edit tab. So the fixed-function OpenGL works with NVIDIA's driver. These
   windows were opened by a test-only hook calling the same code as the menus (the desktop was
   locked), not by clicking.
+- **With a real keyboard and mouse**, on the same desktop, unlocked:
+  - the program: the console's File, Options, Tools and Help menus; Options > Command Server
+    Settings; Tools > Verify SHA1 and File > Open File Viewer (Ctrl+O), each through the file
+    dialog by typing a path; in the File Viewer, its File menu, View Metadata (Ctrl+X), the
+    shank view button and Help, which opens the help page in the default browser; Help > About,
+    About Qt and User Manual (the browser again); File > Quit (Ctrl+Q).
+  - the AppImage: Ctrl+O, the file dialog and the File Viewer.
+  - SpikeGLX was started from an ssh shell, without the desktop session's variables, so Qt drew
+    its own file dialog. Started from the GNOME desktop, Qt would likely use GTK's dialog (the
+    program) or the desktop portal's (the AppImage, which bundles only that theme plugin).
 - **On GitHub Actions** (`.github/workflows/linux-arm64-offline.yml`, on GitHub's
   `ubuntu-24.04-arm` runners, for every pull request and every push to `dev`): `compile.sh` and
   `package_appimage.sh` from scratch; a check that Qt's X11 plugin finds every library it needs
@@ -81,9 +91,10 @@ On an NVIDIA Jetson AGX Orin (12 Arm cores, Ubuntu 24.04, NVIDIA's driver with O
   `SpikeGLX_pkg` folder for 90 days. A run takes about 4 minutes, of which the build, Qt download
   included, takes about 2 min 40 s. `dev` requires it to pass before a pull request can be
   merged.
-- **Not tested:** clicking the real menus and the file dialog; Wayland without XWayland; Mesa
-  drivers (AMD, Intel, Raspberry Pi); any other Arm board; x86-64 with these scripts; File
-  Viewer features past the first screen; LF, NI and OneBox files; PAR2; the gate/trigger server.
+- **Not tested:** the GTK and desktop-portal file dialogs (see above); Quit on the AppImage;
+  Wayland without XWayland; Mesa drivers (AMD, Intel, Raspberry Pi); any other Arm board; x86-64
+  with these scripts; File Viewer features past the first screen; LF, NI and OneBox files;
+  PAR2; the gate/trigger server.
 
 ## Known issues
 
