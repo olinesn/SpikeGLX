@@ -350,17 +350,14 @@
     </widget>
    </item>
    <item row="11" column="0">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+    <widget class="QCheckBox" name="rulerChk">
+     <property name="toolTip">
+      <string>Ruler left of the shanks: distance from the probe tip</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>8</width>
-       <height>20</height>
-      </size>
+     <property name="text">
+      <string>mm from tip</string>
      </property>
-    </spacer>
+    </widget>
    </item>
    <item row="11" column="1">
     <widget class="QPushButton" name="helpBut">
@@ -430,6 +427,7 @@
   <tabstop>chanBut</tabstop>
   <tabstop>shanksChk</tabstop>
   <tabstop>tracesChk</tabstop>
+  <tabstop>rulerChk</tabstop>
   <tabstop>helpBut</tabstop>
   <tabstop>legendTE</tabstop>
  </tabstops>

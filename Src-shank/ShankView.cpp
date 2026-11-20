@@ -2,7 +2,10 @@
 #include "ShankView.h"
 
 #include <QMouseEvent>
+#include <QPainter>
 #include <QScrollBar>
+
+#include <math.h>
 
 
 /* ---------------------------------------------------------------- */
@@ -34,13 +37,21 @@
 #define TIPPX   (4*rowPix)
 #define TOPPX   rowPix
 
+// Ruler (mm from tip) in a gutter left of the shank viewport.
+// Labels at least RULSEP text heights apart.
+
+#define RULMAJ  6
+#define RULMIN  3
+#define RULSEP  4
+
 /* ---------------------------------------------------------------- */
 /* ShankView ------------------------------------------------------ */
 /* ---------------------------------------------------------------- */
 
 ShankView::ShankView( QWidget *parent )
     :   QOpenGLWidget(parent),
-        smap(0), rowPix(8), bnkRws(0), slidePos(0), sel(0),
+        smap(0), zPitch(0), tipLen(0),
+        rowPix(8), rulPix(0), bnkRws(0), slidePos(0), sel(0),
         iBlue(-1), iRed(-1), sr_mask(-1)
 {
     setAutoFillBackground( false );
@@ -55,6 +66,7 @@ ShankView::ShankView( QWidget *parent )
 // - Calculate width based upon current pad height.
 // - Add 20 for scrollbar.
 // - Add  4 for borders and frames.
+// - Add ruler, if shown.
 //
 int ShankView::idealWidth()
 {
@@ -64,7 +76,7 @@ int ShankView::idealWidth()
             nc  = smap->nc;
     float   pad = rowPix/(1.0f+ROWSEP),
             shk = 2*PADMRG + nc*pad + (nc-1)*pad*COLSEP;
-    return 2*MRGPX + 2*ROIPX + ns*shk + (ns-1)*shk*SHKSEP + 24;
+    return 2*MRGPX + 2*ROIPX + ns*shk + (ns-1)*shk*SHKSEP + 24 + rulPix;
 }
 
 
@@ -133,6 +145,29 @@ void ShankView::setImro( const IMROTbl *R, uint8_t sr_mask )
     _ncolhwr        = R->nCol_hwr();
     bnkRws          = R->nChanPerBank() / _ncolhwr;
     this->sr_mask   = sr_mask;
+
+    zPitch          = R->zPitch();
+    tipLen          = R->tipLength();
+}
+
+
+// Show or hide a ruler left of the shanks: distance from
+// the probe tip in mm. Needs geometry from setImro().
+// The view's idealWidth() grows by the ruler's width.
+//
+void ShankView::setRuler( bool on )
+{
+    dataMtx.lock();
+        if( on && zPitch > 0 ) {
+            rulPix = QFontMetrics( font() ).horizontalAdvance( "00.00" )
+                        + RULMAJ + 6;
+        }
+        else
+            rulPix = 0;
+    dataMtx.unlock();
+
+    resizePads();
+    updateNow();
 }
 
 
@@ -252,6 +287,7 @@ void ShankView::paintGL()
     drawActives();
     drawWheres();
     drawSel();
+    drawRuler();
 
 // -------
 // Restore
@@ -331,6 +367,20 @@ void ShankView::mouseReleaseEvent( QMouseEvent *evt )
 }
 
 
+// Shank viewport: right of the ruler, if shown.
+//
+int ShankView::viewL()
+{
+    return MRGPX + rulPix;
+}
+
+
+int ShankView::viewW()
+{
+    return width() - 2*MRGPX - rulPix;
+}
+
+
 // glViewport() takes device pixels. On a high-DPI screen
 // (devicePixelRatio 2 on a Mac Retina display), logical
 // pixels put the whole drawing in the lower-left corner.
@@ -340,8 +390,8 @@ void ShankView::setViewport()
     qreal   dpr = devicePixelRatio();
 
     glViewport(
-        dpr*MRGPX, dpr*MRGPX,
-        dpr*(width() - 2*MRGPX), dpr*(height() - 2*MRGPX) );
+        dpr*viewL(), dpr*MRGPX,
+        dpr*viewW(), dpr*(height() - 2*MRGPX) );
 }
 
 
@@ -383,7 +433,7 @@ void ShankView::resizePads()
 {
     QMutexLocker    ml( &dataMtx );
 
-    int w = width() - 2*MRGPX;
+    int w = viewW();
 
     if( !smap || w <= 0 ) {
 
@@ -691,7 +741,7 @@ void ShankView::drawSel()
         return;
 
     float   *sv     = &vR[8*sel],
-            xoff    = 4*(VRGT-VLFT)/(width()-2*MRGPX),
+            xoff    = 4*(VRGT-VLFT)/viewW(),
             yoff    = 4,
             vert[8];
 
@@ -839,7 +889,7 @@ void ShankView::drawExcludes()
         return;
 
     GLfloat vert[8];
-    float   xoff    = 2*(VRGT-VLFT)/(width()-2*MRGPX),
+    float   xoff    = 2*(VRGT-VLFT)/viewW(),
             yoff    = 2;
     int     nc      = smap->nc,
             nr      = smap->nr;
@@ -888,7 +938,7 @@ void ShankView::drawIncludes()
         return;
 
     GLfloat vert[8];
-    float   xoff    = 2*(VRGT-VLFT)/(width()-2*MRGPX),
+    float   xoff    = 2*(VRGT-VLFT)/viewW(),
             yoff    = 2;
     int     nc      = smap->nc,
             nr      = smap->nr;
@@ -1111,6 +1161,106 @@ void ShankView::drawWheres()
 }
 
 
+// Ruler left of the shanks: distance from the probe tip, mm.
+//
+// Rows are drawn evenly, one per zPitch, so the pad center of
+// row r is (tipLen + r*zPitch) um from the tip; the same numbers
+// place Pinpoint anatomy, and the geometry map has z = r*zPitch.
+// The tip drawing is not to scale, so the ruler spans the rows.
+//
+// Labels: smallest step of {1,2,5} x 10^n um that puts them at
+// least RULSEP text heights apart. Minor ticks if 4+ px apart.
+//
+// The text needs a QPainter; GL state is saved around it, as in
+// MGraph::renderTextWin(). QPainter's GL engine doesn't reset the
+// legacy polygon mode, and the drawing above leaves GL_LINE set,
+// which would draw each glyph's quad as an outline.
+//
+void ShankView::drawRuler()
+{
+    if( !rulPix || !smap || !smap->nr )
+        return;
+
+    static const double mant[3] = {1, 2, 5};
+
+    QFontMetrics    FM( font() );
+    double          pxPerUm = rowPix / zPitch,
+                    y0      = TIPPX + rowPix/(2*(1.0f+ROWSEP)),
+                    zBot    = tipLen,
+                    zTop    = tipLen + (smap->nr - 1) * zPitch,
+                    step    = 10,
+                    minor;
+    int             xR      = MRGPX + rulPix - 2,
+                    fh      = FM.height(),
+                    im      = 0,
+                    dec;
+
+// Label step: 10, 20, 50, 100, ... um
+
+    for( int k = 0; k < 9; ++k ) {
+        im      = k % 3;
+        step    = mant[im] * pow( 10.0, 1 + k/3 );
+        if( step * pxPerUm >= RULSEP * fh )
+            break;
+    }
+
+    dec = (step >= 1000 ? 0 : (step >= 100 ? 1 : 2));
+
+// Minor step
+
+    minor = step / (im == 1 ? 4 : 5);
+
+    if( minor * pxPerUm < 4 )
+        minor = (step/2 * pxPerUm >= 4 ? step/2 : 0);
+
+// Visible z range, a step beyond the edges
+
+    double  zLo = qMax( zBot, tipLen + (vBot - y0)/pxPerUm - step ),
+            zHi = qMin( zTop, tipLen + (vTop - y0)/pxPerUm + step );
+
+    if( zLo > zHi )
+        return;
+
+    auto    Y = [&]( double z )
+                {return MRGPX + vTop - (y0 + (z - tipLen)*pxPerUm);};
+
+// Draw
+
+    glPushClientAttrib( GL_CLIENT_ALL_ATTRIB_BITS );
+    glPushAttrib( GL_ALL_ATTRIB_BITS );
+    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+
+    QPainter    p( this );
+    p.setClipRect( 0, MRGPX, xR + 1, height() - 2*MRGPX );
+    p.setPen( QColor( 51, 51, 51 ) );
+    p.setRenderHint( QPainter::TextAntialiasing );
+
+    p.drawLine( QPointF( xR, Y( zLo ) ), QPointF( xR, Y( zHi ) ) );
+
+    if( minor > 0 ) {
+        for( double i = ceil( zLo/minor ); i*minor <= zHi; ++i ) {
+            double  y = Y( i*minor );
+            p.drawLine( QPointF( xR - RULMIN, y ), QPointF( xR, y ) );
+        }
+    }
+
+    for( double i = ceil( zLo/step ); i*step <= zHi; ++i ) {
+        double  z = i*step,
+                y = Y( z );
+        p.drawLine( QPointF( xR - RULMAJ, y ), QPointF( xR, y ) );
+        p.drawText(
+            QRectF( 0, y - fh, xR - RULMAJ - 2, 2*fh ),
+            Qt::AlignRight | Qt::AlignVCenter,
+            QString::number( z/1000, 'f', dec ) );
+    }
+
+    p.end();
+
+    glPopAttrib();
+    glPopClientAttrib();
+}
+
+
 void ShankView::drawTri( float l, float t, float w, float h, SColor c )
 {
     float vert[6] = {
@@ -1154,14 +1304,14 @@ void ShankView::drawRect( float l, float t, float w, float h, SColor c )
 //
 bool ShankView::evt2Pad( int &s, int &c, int &r, const QMouseEvent *evt )
 {
-    float   w = width() - 2*MRGPX;
+    float   w = viewW();
 
     if( !smap || w <= 0 )
         return false;
 
 // To local view x-coords
 
-    float   x = (VRGT-VLFT)*(evt->position().x()-MRGPX)/w + VLFT + hlfWid;
+    float   x = (VRGT-VLFT)*(evt->position().x()-viewL())/w + VLFT + hlfWid;
 
     if( x <= 0 )
         return false;
@@ -1246,6 +1396,11 @@ ShankScroll::ShankScroll( QWidget *parent )
     setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
     setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
     setViewport( theV );
+
+// setViewport() turns autoFillBackground on. A QOpenGLWidget needs
+// it off, or a QPainter (the ruler's labels) clears the frame first.
+
+    theV->setAutoFillBackground( false );
 }
 
 

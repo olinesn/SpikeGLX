@@ -47,6 +47,7 @@ public:
     void syncYPix( int y );
     ShankView* view() const;
     ShankScroll* scroll() const;
+    void setRuler( bool on );
     void setStatus( const QString &s );
     void update();
 

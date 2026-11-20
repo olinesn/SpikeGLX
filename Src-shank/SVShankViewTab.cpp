@@ -27,6 +27,7 @@ void SVShankViewTab::UsrSettings::loadSettings( QSettings &S )
     rng[2]      = S.value( "rngLF", 100 ).toInt();
     colorShanks = S.value( "colorShanks", true ).toBool();
     colorTraces = S.value( "colorTraces", false ).toBool();
+    ruler       = S.value( "ruler", false ).toBool();
 }
 
 
@@ -42,6 +43,7 @@ void SVShankViewTab::UsrSettings::saveSettings( QSettings &S ) const
     S.setValue( "rngLF", rng[2] );
     S.setValue( "colorShanks", colorShanks );
     S.setValue( "colorTraces", colorTraces );
+    S.setValue( "ruler", ruler );
 }
 
 /* ---------------------------------------------------------------- */
@@ -113,6 +115,10 @@ void SVShankViewTab::init( bool autosize )
     svTabUI->tracesChk->setChecked( set.colorTraces );
     svTabUI->tracesChk->setEnabled( false );
 
+    svTabUI->rulerChk->setChecked( set.ruler );
+    svTabUI->rulerChk->setVisible( SC->view()->rulerAble() );
+    SC->view()->setRuler( set.ruler );
+
     ConnectUI( svTabUI->ypixSB, SIGNAL(valueChanged(int)), this, SLOT(ypixChanged(int)) );
     ConnectUI( svTabUI->whatCB, SIGNAL(currentIndexChanged(int)), this, SLOT(whatChanged(int)) );
     ConnectUI( svTabUI->TSB, SIGNAL(valueChanged(int)), this, SLOT(threshChanged(int)) );
@@ -122,6 +128,7 @@ void SVShankViewTab::init( bool autosize )
     ConnectUI( svTabUI->chanBut, SIGNAL(clicked()), this, SLOT(chanBut()) );
     ConnectUI( svTabUI->shanksChk, SIGNAL(clicked(bool)), this, SLOT(shanksCheck(bool)) );
     ConnectUI( svTabUI->tracesChk, SIGNAL(clicked(bool)), this, SLOT(tracesCheck(bool)) );
+    ConnectUI( svTabUI->rulerChk, SIGNAL(clicked(bool)), this, SLOT(rulerCheck(bool)) );
     ConnectUI( svTabUI->helpBut, SIGNAL(clicked()), this, SLOT(helpBut()) );
 }
 
@@ -320,6 +327,14 @@ void SVShankViewTab::tracesCheck( bool on )
     set.colorTraces = on;
     SC->saveSettings();
     emit SC->gimmeTraces();
+}
+
+
+void SVShankViewTab::rulerCheck( bool on )
+{
+    set.ruler = on;
+    SC->saveSettings();
+    SC->setRuler( on );
 }
 
 
