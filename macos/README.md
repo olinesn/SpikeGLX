@@ -25,7 +25,7 @@ gets one too). Download the artifact `SpikeGLX_NISIM-macos-arm64`. It holds
 
 ## Changes to the source
 
-Three commits on top of upstream (25 lines added, 12 removed, in 4 files):
+Four commits on top of upstream (30 lines added, 13 removed, in 4 files):
 
 1. **`Src-remote/CmdServer.cpp`**: the remote commands `SETDATADIR` and `SETMULTIDRIVEENABLE`
    called `MainApp` directly on the command server's worker thread. Both rebuild the Data Directory
@@ -38,6 +38,13 @@ Three commits on top of upstream (25 lines added, 12 removed, in 4 files):
    holding the `.app` (Finder starts apps in `/`, so settings never saved).
 3. **`SpikeGLX40.pro`**: `HAVE_IMEC`, `HAVE_VISA`, `HAVE_NIDAQmx` commented out (upstream's own
    switch for the simulated build).
+4. **`Src-main/Util.cpp`**: an error message brings the console window to the front.
+   `Error::~Error()` queued `showNormal()` and `raise()` to the GUI thread but called
+   `activateWindow()` directly, on whichever thread logged the error. A remote command's error
+   reply is logged on the command server's worker thread. When another SpikeGLX window had the
+   keyboard focus, macOS aborted the app there (`EXC_BREAKPOINT`: `-[NSWindow makeKeyWindow]` →
+   `-[NSPanel resignKeyWindow]`; seen once in 19 test launches). It is now queued like the other
+   two. An upstream bug too, for the same reason as 1.
 
 The rest is new: `.github/workflows/macos-arm64-offline.yml`, this folder and `CLAUDE.md`
 (how changes go into this fork).
@@ -72,6 +79,9 @@ arm64 (57 → 29 MB), removes rpaths that point outside the bundle and signs it 
 - **By hand on an Apple Silicon Mac:** the File Viewer on a synthetic NP1.0 recording
   (`make_synth_np1.py`) draws traces; the Shank Viewer's IMRO edit tab and the IMRO Table Editor
   (NP2.0 4-shank) draw the probes; Verify SHA1 passes a good file and fails a corrupted one.
+  290 remote error replies over 8 launches: the app stays up, and a library injected to watch
+  AppKit's window-activation calls sees all of them on the GUI thread (without change 4, two
+  per error reply ran on the command server's thread).
 - **Not tested:** clicking the real menus and the native file dialog; File Viewer features past
   the first screen; LF, NI and OneBox files; the Configure dialog and simulated runs; Wave Planner;
   PAR2 (its helper tool ships for Windows only); the gate/trigger server.
