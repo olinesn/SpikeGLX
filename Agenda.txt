@@ -1,6 +1,11 @@
 // RELEASE NOTES
 // ==========================
 
+20261112
+--------
++ Improve remote function dispatch.
++ Improve non-winOS compatibility.
+
 20261020
 --------
 + Fix sync for probes with LF-band.
