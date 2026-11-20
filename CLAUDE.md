@@ -12,8 +12,14 @@ Apple Silicon Macs (`SpikeGLX_NISIM.app`); `macos/README.md` describes it.
   applies to admins too. The user merges; never merge, and never suggest a merge or an order.
 - **Taking a new upstream version:** a PR to `dev` that merges `master` after a Sync fork.
 - **Keep upstream fixes in their own commits** (like the command-server crash fix), so one can
-  go upstream by itself. Upstream takes no pull requests; it answers issues. Post nothing on
-  `billkarsh/SpikeGLX` unless the user asks for that post.
+  go upstream by itself.
+- **Sending a fix upstream** (only when the user asks; post nothing on `billkarsh/SpikeGLX`
+  otherwise). Upstream takes pull requests and issues; it had no pull requests before this
+  fork's first four (#54–#57). Branch `fix-<what>` off `master` (upstream's tree, not `dev`),
+  cherry-pick the fix's one commit, check that `git patch-id --stable` matches the commit that
+  was tested, and drop fork-only wording from its message. Open the PR to `billkarsh/SpikeGLX`
+  `master`, with `Fixes #<n>` when an upstream issue exists. `dev` keeps its own copy of the
+  fix; after upstream merges it, the next Sync fork and merge of `master` bring the same change.
 
 ## Editing upstream files
 
