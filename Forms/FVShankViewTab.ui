@@ -455,6 +455,16 @@
        </property>
       </widget>
      </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QCheckBox" name="rulerChk">
+       <property name="toolTip">
+        <string>Ruler left of the shanks: distance from the probe tip</string>
+       </property>
+       <property name="text">
+        <string>mm from tip</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
@@ -482,6 +492,7 @@
   <tabstop>tracesChk</tabstop>
   <tabstop>expBut</tabstop>
   <tabstop>helpBut</tabstop>
+  <tabstop>rulerChk</tabstop>
  </tabstops>
  <resources/>
  <connections/>

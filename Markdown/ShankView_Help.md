@@ -258,6 +258,9 @@ Recently, other developers are making imro editor tools:
 * The viewer is resizable.
 * The viewer stays in front of its Graphs window.
 * Change the magnification with the `Pixels/pad` box.
+* Check `mm from tip` (imec probes) for a ruler left of the shanks: distance
+along the shank from the probe tip, in mm. The tip itself is not drawn to scale,
+so the ruler covers the electrode rows only.
 * Click on a graph to highlight/select that pad in the viewer.
 * Click on a viewer pad to select that graph.
 * `For dual-band probes, like NP 1.0,` shift+click on a viewer pad to select LF.

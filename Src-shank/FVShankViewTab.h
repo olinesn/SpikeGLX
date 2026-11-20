@@ -34,7 +34,8 @@ private:
                 rng[3];     // {rate, uV, uV}
         bool    gbldmx,
                 colorShanks,
-                colorTraces;
+                colorTraces,
+                ruler;
 
         void loadSettings( QSettings &S );
         void saveSettings( QSettings &S ) const;
@@ -116,6 +117,7 @@ private slots:
     void chanBut();
     void shanksCheck( bool on );
     void tracesCheck( bool on );
+    void rulerCheck( bool on );
     void expBut();
     void helpBut();
 
