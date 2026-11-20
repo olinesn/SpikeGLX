@@ -200,9 +200,12 @@ void ShankView::resizeGL( int w, int h )
 // Coord system
 // ------------
 
+    Q_UNUSED( w )
+    Q_UNUSED( h )
+
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
-    glViewport( MRGPX, MRGPX, w - 2*MRGPX, h - 2*MRGPX );
+    setViewport();
 
     resizePads();
 }
@@ -220,7 +223,7 @@ void ShankView::paintGL()
 
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
-    glViewport( MRGPX, MRGPX, width() - 2*MRGPX, height() - 2*MRGPX );
+    setViewport();
     setClipping();
     glOrtho( VLFT, VRGT, vBot, vTop, -1, 1 );
 
@@ -325,6 +328,20 @@ void ShankView::mouseReleaseEvent( QMouseEvent *evt )
             emit( rbutReleased( evt->globalPosition().toPoint(), s, c, r, it != ISM.end() ) );
         }
     }
+}
+
+
+// glViewport() takes device pixels. On a high-DPI screen
+// (devicePixelRatio 2 on a Mac Retina display), logical
+// pixels put the whole drawing in the lower-left corner.
+//
+void ShankView::setViewport()
+{
+    qreal   dpr = devicePixelRatio();
+
+    glViewport(
+        dpr*MRGPX, dpr*MRGPX,
+        dpr*(width() - 2*MRGPX), dpr*(height() - 2*MRGPX) );
 }
 
 

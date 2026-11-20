@@ -119,6 +119,7 @@ protected:
     void mouseReleaseEvent( QMouseEvent *evt );
 
 private:
+    void setViewport();
     float viewportPix();
     float spanPix();
     void setClipping();
