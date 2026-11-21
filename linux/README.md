@@ -79,10 +79,13 @@ On an NVIDIA Jetson AGX Orin (12 Arm cores, Ubuntu 24.04, NVIDIA's driver with O
     dialog by typing a path; in the File Viewer, its File menu, View Metadata (Ctrl+X), the
     shank view button and Help, which opens the help page in the default browser; Help > About,
     About Qt and User Manual (the browser again); File > Quit (Ctrl+Q).
-  - the AppImage: Ctrl+O, the file dialog and the File Viewer.
-  - SpikeGLX was started from an ssh shell, without the desktop session's variables, so Qt drew
-    its own file dialog. Started from the GNOME desktop, Qt would likely use GTK's dialog (the
-    program) or the desktop portal's (the AppImage, which bundles only that theme plugin).
+  - the AppImage: Ctrl+O, the file dialog, the File Viewer and File > Quit (Ctrl+Q).
+  - **File dialogs:** started with the desktop session's variables, as a launcher starts it, the
+    program shows GNOME's own (GTK) file dialog, through Qt's GTK 3 plugin. Ctrl+O (picking the
+    file) and Verify SHA1 (typing its path) worked in it. The AppImage bundles only Qt's
+    desktop-portal plugin, which Qt picks by itself only inside Flatpak or Snap, so it shows Qt's
+    own dialog on the desktop too. Started from an ssh shell without those variables, both show
+    Qt's own dialog. Every dialog tried worked.
 - **On GitHub Actions** (`.github/workflows/linux-arm64-offline.yml`, on GitHub's
   `ubuntu-24.04-arm` runners, for every pull request and every push to `dev`): `compile.sh` and
   `package_appimage.sh` from scratch; a check that Qt's X11 plugin finds every library it needs
@@ -91,8 +94,8 @@ On an NVIDIA Jetson AGX Orin (12 Arm cores, Ubuntu 24.04, NVIDIA's driver with O
   `SpikeGLX_pkg` folder for 90 days. A run takes about 4 minutes, of which the build, Qt download
   included, takes about 2 min 40 s. `dev` requires it to pass before a pull request can be
   merged.
-- **Not tested:** the GTK and desktop-portal file dialogs (see above); Quit on the AppImage;
-  Wayland without XWayland; Mesa drivers (AMD, Intel, Raspberry Pi); any other Arm board; x86-64
+- **Not tested:** the desktop portal's file dialog (the AppImage with
+  `QT_QPA_PLATFORMTHEME=xdgdesktopportal`); Wayland without XWayland; Mesa drivers (AMD, Intel, Raspberry Pi); any other Arm board; x86-64
   with these scripts; File Viewer features past the first screen; LF, NI and OneBox files;
   PAR2; the gate/trigger server.
 
