@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=SpikeGLX
+Exec=SpikeGLX_NISIM
+Icon=spikeglx
+Comment=SpikeGLX offline build: File Viewer and Shank Viewer
+Terminal=false
+Categories=Science;Utility;
