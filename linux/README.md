@@ -14,11 +14,11 @@ Viewer and Shank Viewer, edits IMRO tables, verifies SHA1s and runs the command 
 
 ## Source changes
 
-One line beyond what `dev` already has for macOS: `Src-graphs/SVToolsMR.h` included
-`"TspikeEditor.h"`, but the file is `TSpikeEditor.h`. Windows and macOS file systems ignore the
-case; Linux doesn't, so the build stopped there. Upstream's own Linux release (v20260901)
-predates the line. Nothing else needed changing: upstream keeps its Linux code paths working, and
-the parts of SpikeGLX that are built have no x86-only code.
+One line: `Src-graphs/SVToolsMR.h` included `"TspikeEditor.h"`, but the file is
+`TSpikeEditor.h`. Windows and macOS file systems ignore the case; Linux doesn't, so the build
+stopped there. Upstream made the same fix, byte for byte, in v20261112, so with that version in
+`dev` the Linux build needs no source change at all. Nothing else needed changing: upstream keeps
+its Linux code paths working, and the parts of SpikeGLX that are built have no x86-only code.
 
 The `.pro` is untouched; `compile.sh` overrides its unix `CONFIG += debug` and `DESTDIR` with
 qmake `-after`, as the macOS build does.
