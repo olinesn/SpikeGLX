@@ -58,8 +58,11 @@ private:
     float                       shkWid,
                                 hlfWid,
                                 pmrg,
-                                colWid;
+                                colWid,
+                                zPitch, // um; 0 => no geometry
+                                tipLen; // um, tip to row 0
     int                         rowPix,
+                                rulPix, // ruler width; 0 => off
                                 _ncolhwr,
                                 bnkRws, // nonzero => imec
                                 slidePos,
@@ -85,6 +88,8 @@ public:
     int getSel()                {return sel;}
 
     void setImro( const IMROTbl *R, uint8_t sr_mask );
+    bool rulerAble() const      {return zPitch > 0;}
+    void setRuler( bool on );
     void setROI( tconstImroROIs vR, tconstImroSites vX )
         {QMutexLocker ml( &dataMtx ); vROI = vR; this->vX = vX;}
     void setActive( tconstImroROIs vA )
@@ -119,6 +124,9 @@ protected:
     void mouseReleaseEvent( QMouseEvent *evt );
 
 private:
+    int viewL();
+    int viewW();
+    void setViewport();
     float viewportPix();
     float spanPix();
     void setClipping();
@@ -138,6 +146,7 @@ private:
     void drawROIs();
     void drawActives();
     void drawWheres();
+    void drawRuler();
     void drawTri( float l, float t, float w, float h, SColor c );
     void drawRect( float l, float t, float w, float h, SColor c );
     bool evt2Pad( int &s, int &c, int &r, const QMouseEvent *evt );

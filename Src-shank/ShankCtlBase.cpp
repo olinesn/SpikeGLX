@@ -207,6 +207,18 @@ ShankScroll* ShankCtlBase::scroll() const
 }
 
 
+// Show/hide the view's ruler. The window grows or shrinks
+// by the ruler's width, so the shanks keep their size.
+//
+void ShankCtlBase::setRuler( bool on )
+{
+    int w0 = view()->idealWidth();
+
+    view()->setRuler( on );
+    resize( width() + view()->idealWidth() - w0, height() );
+}
+
+
 void ShankCtlBase::setStatus( const QString &s )
 {
     scUI->statusLbl->setText( s );

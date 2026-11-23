@@ -29,6 +29,7 @@ void FVShankViewTab::UsrSettings::loadSettings( QSettings &S )
     gbldmx      = S.value( "gbldmx", true ).toBool();
     colorShanks = S.value( "colorShanks", true ).toBool();
     colorTraces = S.value( "colorTraces", false ).toBool();
+    ruler       = S.value( "ruler", false ).toBool();
 }
 
 
@@ -45,6 +46,7 @@ void FVShankViewTab::UsrSettings::saveSettings( QSettings &S ) const
     S.setValue( "gbldmx", gbldmx );
     S.setValue( "colorShanks", colorShanks );
     S.setValue( "colorTraces", colorTraces );
+    S.setValue( "ruler", ruler );
 }
 
 /* ---------------------------------------------------------------- */
@@ -135,6 +137,10 @@ void FVShankViewTab::init( const ShankMap *map, bool autosize )
     fvTabUI->tracesChk->setChecked( set.colorTraces );
     fvTabUI->tracesChk->setEnabled( false );
 
+    fvTabUI->rulerChk->setChecked( set.ruler );
+    fvTabUI->rulerChk->setVisible( SC->view()->rulerAble() );
+    SC->view()->setRuler( set.ruler );
+
     ConnectUI( fvTabUI->ypixSB, SIGNAL(valueChanged(int)), this, SLOT(ypixChanged(int)) );
     ConnectUI( fvTabUI->gbldmxChk, SIGNAL(clicked(bool)), this, SLOT(gbldmxCheck(bool)) );
     ConnectUI( fvTabUI->maxrowSB, SIGNAL(valueChanged(int)), this, SLOT(maxrowChanged(int)) );
@@ -147,6 +153,7 @@ void FVShankViewTab::init( const ShankMap *map, bool autosize )
     ConnectUI( fvTabUI->chanBut, SIGNAL(clicked()), this, SLOT(chanBut()) );
     ConnectUI( fvTabUI->shanksChk, SIGNAL(clicked(bool)), this, SLOT(shanksCheck(bool)) );
     ConnectUI( fvTabUI->tracesChk, SIGNAL(clicked(bool)), this, SLOT(tracesCheck(bool)) );
+    ConnectUI( fvTabUI->rulerChk, SIGNAL(clicked(bool)), this, SLOT(rulerCheck(bool)) );
     ConnectUI( fvTabUI->expBut, SIGNAL(clicked()), this, SLOT(expBut()) );
     ConnectUI( fvTabUI->helpBut, SIGNAL(clicked()), this, SLOT(helpBut()) );
 
@@ -486,6 +493,14 @@ void FVShankViewTab::tracesCheck( bool on )
     set.colorTraces = on;
     SC->saveSettings();
     emit SC->gimmeTraces();
+}
+
+
+void FVShankViewTab::rulerCheck( bool on )
+{
+    set.ruler = on;
+    SC->saveSettings();
+    SC->setRuler( on );
 }
 
 

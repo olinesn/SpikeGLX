@@ -42,6 +42,21 @@ without their argument read past an empty list (they now reply with an error).
 The rest is new: `.github/workflows/macos-arm64-offline.yml`, this folder and `CLAUDE.md`
 (how changes go into this fork).
 
+### The Shank Viewer
+
+Besides the changes above, two commits change upstream's Shank Viewer (265 lines added, 22
+removed, in 12 files):
+
+1. **`Src-shank/ShankView.cpp`**: the Shank Viewer passed logical pixels to `glViewport()`, which
+   takes device pixels, so on a Retina screen the probe filled only the lower-left quarter of its
+   pane while clicks still mapped to the whole pane. The viewport is now scaled by
+   `devicePixelRatio()`. Windows is unchanged (SpikeGLX runs DPI-unaware there), so this is an
+   upstream bug only on high-DPI macOS and Linux.
+2. **`Src-shank/`, `Forms/`, the Shank Viewer help**: a "mm from tip" checkbox in the Shank
+   Activity window's View tab draws a ruler of distance from the probe tip, asked for in
+   billkarsh/SpikeGLX#50. Positions come from the probe table (`tipLength + row × zPitch`, the
+   same numbers SpikeGLX uses for Pinpoint anatomy). Off by default; saved with the View settings.
+
 ## Build it yourself
 
 Needs Xcode or its Command Line Tools, and Python 3 for aqtinstall. No admin rights.
@@ -69,6 +84,12 @@ arm64 (57 → 29 MB), removes rpaths that point outside the bundle and signs it 
   from outside the bundle except macOS itself, signature valid) and `smoke_test.py` (starts from
   `/`, sends `GETVERSION`, `GETDATADIR`, `SETDATADIR` and `SETMULTIDRIVEENABLE` over
   127.0.0.1, checks the app stays up and saves its settings beside the `.app`).
+- **Shank Activity ruler (File Viewer):** on synthetic NP1.0 and NP2.0 4-shank recordings, the
+  ruler's marks, Pinpoint anatomy bands placed at known distances from the tip, and the hovered
+  row agree; the window grows by the ruler's width and shrinks back; the setting survives a
+  restart. A Windows 11 MinGW build passed the same checks on a real NP2.0 4-shank recording, but
+  with Qt's software OpenGL (no GPU in a disconnected remote session), which doesn't draw the
+  probe itself, so the ruler beside the shanks was only seen on the Mac.
 - **By hand on an Apple Silicon Mac:** the File Viewer on a synthetic NP1.0 recording
   (`make_synth_np1.py`) draws traces; the Shank Viewer's IMRO edit tab and the IMRO Table Editor
   (NP2.0 4-shank) draw the probes; Verify SHA1 passes a good file and fails a corrupted one.
