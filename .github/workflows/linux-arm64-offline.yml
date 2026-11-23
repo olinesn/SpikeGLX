@@ -1,0 +1,88 @@
+# Builds the offline SpikeGLX (SpikeGLX_NISIM) natively for Linux on Arm
+# (aarch64) with linux/compile.sh, packs it as an AppImage with
+# linux/package_appimage.sh, runs linux/smoke_test.py on the program and on the
+# AppImage under a virtual X display, and uploads the zipped SpikeGLX_pkg folder.
+name: Linux arm64 offline build
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-arm64-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # dev's branch protection requires this check by name.
+    name: Linux arm64 build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    env:
+      QT_VERSION: 6.10.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools, X11 libraries and a virtual display
+        run: |
+          sudo apt-get update -q
+          # libgl-dev: OpenGL headers for the build. The xcb and xkbcommon
+          # libraries are what Qt's X11 plugin loads: the bare program uses the
+          # system's, and linuxdeploy copies them into the AppImage. xvfb + Mesa:
+          # an X display with software OpenGL. fuse3: mounts the AppImage.
+          # python3-numpy: macos/make_synth_np1.py, which the smoke test runs.
+          sudo apt-get install -y --no-install-recommends \
+            build-essential python3-venv python3-numpy libgl-dev file zip \
+            libegl1 libfontconfig1 libfreetype6 fonts-dejavu-core libdbus-1-3 \
+            libx11-xcb1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 \
+            libxcb-glx0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-sync1 \
+            libxcb-xfixes0 libxcb-xinerama0 libxcb-xinput0 libxcb-xkb1 \
+            xvfb xauth libgl1-mesa-dri libglx-mesa0 fuse3
+          echo "QT_ROOT=$RUNNER_TEMP/w/Qt/$QT_VERSION/gcc_arm64" >> "$GITHUB_ENV"
+
+      - name: Build (linux/compile.sh, Qt download included)
+        run: bash linux/compile.sh "$RUNNER_TEMP/w"
+
+      - name: Check that Qt's X11 plugin finds every library it needs
+        run: |
+          missing=$(ldd "$RUNNER_TEMP/w/out/SpikeGLX_NISIM" \
+            "$QT_ROOT"/plugins/platforms/libqxcb.so "$QT_ROOT"/plugins/xcbglintegrations/*.so \
+            | grep 'not found' || true)
+          if [ -n "$missing" ]; then echo "$missing"; exit 1; fi
+
+      - name: Pack the AppImage (linux/package_appimage.sh)
+        run: bash linux/package_appimage.sh "$QT_ROOT" "$RUNNER_TEMP/w/out/SpikeGLX_NISIM" "$RUNNER_TEMP/pkg"
+
+      - name: Check that the AppImage leaves out the system's OpenGL and C libraries
+        run: |
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/pkg/SpikeGLX_pkg/SpikeGLX-aarch64.AppImage" --appimage-extract > /dev/null
+          ls squashfs-root/usr/lib
+          bad=$(ls squashfs-root/usr/lib | grep -E '^lib(GL|GLX|EGL|OpenGL|GLdispatch|c)\.so' || true)
+          if [ -n "$bad" ]; then echo "bundled, but must come from the system: $bad"; exit 1; fi
+          rm -rf squashfs-root
+
+      - name: Smoke test the program (virtual X display)
+        run: xvfb-run -a -s "-screen 0 1920x1080x24" /usr/bin/python3 linux/smoke_test.py "$RUNNER_TEMP/w/out/SpikeGLX_NISIM"
+
+      - name: Smoke test the AppImage (virtual X display)
+        run: |
+          # The AppImage mounts itself with FUSE; without /dev/fuse it unpacks instead.
+          [ -e /dev/fuse ] || export APPIMAGE_EXTRACT_AND_RUN=1
+          xvfb-run -a -s "-screen 0 1920x1080x24" /usr/bin/python3 linux/smoke_test.py "$RUNNER_TEMP/pkg/SpikeGLX_pkg/SpikeGLX-aarch64.AppImage"
+
+      - name: Zip SpikeGLX_pkg
+        # zip keeps the AppImage's executable bit; upload-artifact alone would drop it.
+        run: cd "$RUNNER_TEMP/pkg" && zip -qr "$RUNNER_TEMP/SpikeGLX_NISIM-linux-arm64.zip" SpikeGLX_pkg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpikeGLX_NISIM-linux-arm64
+          path: ${{ runner.temp }}/SpikeGLX_NISIM-linux-arm64.zip
+          retention-days: 90

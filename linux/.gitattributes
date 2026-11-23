@@ -1,0 +1,3 @@
+# Scripts here run on Linux: keep LF (the repo default is CRLF).
+* text eol=lf
+*.png binary
