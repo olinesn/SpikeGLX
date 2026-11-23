@@ -25,7 +25,7 @@ gets one too). Download the artifact `SpikeGLX_NISIM-macos-arm64`. It holds
 
 ## Changes to the source
 
-Five commits on top of upstream (290 lines added, 34 removed, in 16 files):
+Three commits on top of upstream (25 lines added, 12 removed, in 4 files):
 
 1. **`Src-remote/CmdServer.cpp`**: the remote commands `SETDATADIR` and `SETMULTIDRIVEENABLE`
    called `MainApp` directly on the command server's worker thread. Both rebuild the Data Directory
@@ -38,18 +38,24 @@ Five commits on top of upstream (290 lines added, 34 removed, in 16 files):
    holding the `.app` (Finder starts apps in `/`, so settings never saved).
 3. **`SpikeGLX40.pro`**: `HAVE_IMEC`, `HAVE_VISA`, `HAVE_NIDAQmx` commented out (upstream's own
    switch for the simulated build).
-4. **`Src-shank/ShankView.cpp`**: the Shank Viewer passed logical pixels to `glViewport()`, which
+
+The rest is new: `.github/workflows/macos-arm64-offline.yml`, this folder and `CLAUDE.md`
+(how changes go into this fork).
+
+### The Shank Viewer
+
+Besides the changes above, two commits change upstream's Shank Viewer (265 lines added, 22
+removed, in 12 files):
+
+1. **`Src-shank/ShankView.cpp`**: the Shank Viewer passed logical pixels to `glViewport()`, which
    takes device pixels, so on a Retina screen the probe filled only the lower-left quarter of its
    pane while clicks still mapped to the whole pane. The viewport is now scaled by
    `devicePixelRatio()`. Windows is unchanged (SpikeGLX runs DPI-unaware there), so this is an
    upstream bug only on high-DPI macOS and Linux.
-5. **`Src-shank/`, `Forms/`, the Shank Viewer help**: a "mm from tip" checkbox in the Shank
+2. **`Src-shank/`, `Forms/`, the Shank Viewer help**: a "mm from tip" checkbox in the Shank
    Activity window's View tab draws a ruler of distance from the probe tip, asked for in
    billkarsh/SpikeGLX#50. Positions come from the probe table (`tipLength + row × zPitch`, the
    same numbers SpikeGLX uses for Pinpoint anatomy). Off by default; saved with the View settings.
-
-The rest is new: `.github/workflows/macos-arm64-offline.yml`, this folder and `CLAUDE.md`
-(how changes go into this fork).
 
 ## Build it yourself
 
@@ -78,15 +84,15 @@ arm64 (57 → 29 MB), removes rpaths that point outside the bundle and signs it 
   from outside the bundle except macOS itself, signature valid) and `smoke_test.py` (starts from
   `/`, sends `GETVERSION`, `GETDATADIR`, `SETDATADIR` and `SETMULTIDRIVEENABLE` over
   127.0.0.1, checks the app stays up and saves its settings beside the `.app`).
-- **By hand on an Apple Silicon Mac:** the File Viewer on a synthetic NP1.0 recording
-  (`make_synth_np1.py`) draws traces; the Shank Viewer's IMRO edit tab and the IMRO Table Editor
-  (NP2.0 4-shank) draw the probes; Verify SHA1 passes a good file and fails a corrupted one.
 - **Shank Activity ruler (File Viewer):** on synthetic NP1.0 and NP2.0 4-shank recordings, the
   ruler's marks, Pinpoint anatomy bands placed at known distances from the tip, and the hovered
   row agree; the window grows by the ruler's width and shrinks back; the setting survives a
   restart. A Windows 11 MinGW build passed the same checks on a real NP2.0 4-shank recording, but
   with Qt's software OpenGL (no GPU in a disconnected remote session), which doesn't draw the
   probe itself, so the ruler beside the shanks was only seen on the Mac.
+- **By hand on an Apple Silicon Mac:** the File Viewer on a synthetic NP1.0 recording
+  (`make_synth_np1.py`) draws traces; the Shank Viewer's IMRO edit tab and the IMRO Table Editor
+  (NP2.0 4-shank) draw the probes; Verify SHA1 passes a good file and fails a corrupted one.
 - **Not tested:** clicking the real menus and the native file dialog; File Viewer features past
   the first screen; LF, NI and OneBox files; the Configure dialog and simulated runs; Wave Planner;
   PAR2 (its helper tool ships for Windows only); the gate/trigger server.
