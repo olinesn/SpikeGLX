@@ -3,9 +3,9 @@
 *Written by Claude Code.*
 
 This fork's `dev` branch builds SpikeGLX's offline variant, `SpikeGLX_NISIM.app`, as a
-native arm64 macOS app with Qt 6.10.3. It is based on `billkarsh/SpikeGLX` master at `cbcd078`;
-the fork's `master` stays identical to upstream. SpikeGLX doesn't officially support macOS; this
-is an unofficial build for looking at data.
+native arm64 macOS app with Qt 6.10.3. It is based on `billkarsh/SpikeGLX` version 20261112
+(master at `a370ebc`); the fork's `master` stays identical to upstream. SpikeGLX doesn't officially
+support macOS; this is an unofficial build for looking at data.
 
 **It can't acquire.** The imec, VISA and NI-DAQmx backends are turned off, and none of their
 libraries exist for macOS. It can open recordings in the File Viewer, show and edit IMRO tables
@@ -25,19 +25,19 @@ gets one too). Download the artifact `SpikeGLX_NISIM-macos-arm64`. It holds
 
 ## Changes to the source
 
-Three commits on top of upstream (25 lines added, 12 removed, in 4 files):
+Three upstream files change (11 lines added, 9 removed):
 
-1. **`Src-remote/CmdServer.cpp`**: the remote commands `SETDATADIR` and `SETMULTIDRIVEENABLE`
-   called `MainApp` directly on the command server's worker thread. Both rebuild the Data Directory
-   menu, and macOS aborts an app whose main menu changes off the main thread. They now run on the
-   GUI thread (`QMetaObject::invokeMethod`, `Qt::BlockingQueuedConnection`), like every other
-   command. Windows doesn't abort, but Qt widgets aren't thread-safe there either, so this is an
-   upstream bug too.
-2. **`Src-main/Util_osdep.cpp`, `Src-main/Util.cpp`**: `<OpenGL/gl.h>` instead of `<GL/gl.h>`;
+1. **`Src-main/Util_osdep.cpp`, `Src-main/Util.cpp`**: `<OpenGL/gl.h>` instead of `<GL/gl.h>`;
    `QElapsedTimer` instead of `QTime::start/elapsed` (removed in Qt 6); `appPath()` uses the folder
    holding the `.app` (Finder starts apps in `/`, so settings never saved).
-3. **`SpikeGLX40.pro`**: `HAVE_IMEC`, `HAVE_VISA`, `HAVE_NIDAQmx` commented out (upstream's own
+2. **`SpikeGLX40.pro`**: `HAVE_IMEC`, `HAVE_VISA`, `HAVE_NIDAQmx` commented out (upstream's own
    switch for the simulated build).
+
+Upstream 20261112 fixed three crashes found while making this build, so the fork uses upstream's
+code for them: remote `SETDATADIR` and `SETMULTIDRIVEENABLE` rebuilt the Data Directory menu off
+the main thread (the fork had its own fix for this until 20261112); an error message activated the
+console window off the main thread; and `GETDATADIR`, `ENUMDATADIR` and `SETAUDIOPARAMS` sent
+without their argument read past an empty list (they now reply with an error).
 
 The rest is new: `.github/workflows/macos-arm64-offline.yml`, this folder and `CLAUDE.md`
 (how changes go into this fork).
@@ -93,6 +93,10 @@ arm64 (57 → 29 MB), removes rpaths that point outside the bundle and signs it 
 - **By hand on an Apple Silicon Mac:** the File Viewer on a synthetic NP1.0 recording
   (`make_synth_np1.py`) draws traces; the Shank Viewer's IMRO edit tab and the IMRO Table Editor
   (NP2.0 4-shank) draw the probes; Verify SHA1 passes a good file and fails a corrupted one.
+- **Upstream 20261112's crash fixes, on this build:** `GETDATADIR`, `ENUMDATADIR` and
+  `SETAUDIOPARAMS` sent without their argument (3 launches each, heap scribbled), or with a negative
+  folder index, get an error reply and the app stays up. 60 remote error replies over 2 launches,
+  with a library injected to watch AppKit's window-activation calls: all of them on the GUI thread.
 - **Not tested:** clicking the real menus and the native file dialog; File Viewer features past
   the first screen; LF, NI and OneBox files; the Configure dialog and simulated runs; Wave Planner;
   PAR2 (its helper tool ships for Windows only); the gate/trigger server.
