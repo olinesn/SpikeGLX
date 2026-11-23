@@ -13,9 +13,18 @@ describes the same build for Linux on Arm (aarch64), packed as an AppImage.
   `Linux arm64 build`; this applies to admins too. The user merges; never merge, and never
   suggest a merge or an order.
 - **Taking a new upstream version:** a PR to `dev` that merges `master` after a Sync fork.
-- **Keep upstream fixes in their own commits** (like the command-server crash fix), so one can
-  go upstream by itself. Upstream takes no pull requests; it answers issues. Post nothing on
-  `billkarsh/SpikeGLX` unless the user asks for that post.
+- **Keep upstream fixes in their own commits**, so one can go upstream by itself.
+- **Sending a fix upstream** (only when the user asks; post nothing on `billkarsh/SpikeGLX`
+  otherwise). Upstream takes issues and pull requests. Branch `fix-<what>` off `master`
+  (upstream's tree, not `dev`), cherry-pick the fix's one commit, check that
+  `git patch-id --stable` matches the commit that was tested, and drop fork-only wording from its
+  message. Open the PR to `billkarsh/SpikeGLX` `master`, with `Fixes #<n>` when an upstream issue
+  exists. `dev` keeps its own copy of the fix until upstream has one.
+- **What upstream does with a fix:** pull requests aren't merged. Upstream writes the fix in its
+  own commit and closes the issue and the PR unmerged ("Done, in <version>"), as with this fork's
+  first four (upstream #54–#57, version 20261112). The next merge of `master` into `dev` then
+  conflicts wherever `dev` has its own copy: compare the two line by line, keep upstream's version
+  where it fixes the same bug, and update `macos/README.md` in the same PR.
 
 ## Editing upstream files
 
